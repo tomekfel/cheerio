@@ -5,19 +5,6 @@ request('https://www.ddlvalley.me/category/movies/', function(error, response, h
     if (!error && response.statusCode == 200) {
         var $ = cheerio.load(html);
         var parsedResults = [];
-        // $('div.post.br5.cl').each(function(i, element) {
-        //     var a = $(this).prev();
-        //     var title = a.text();
-        //     var link = a.next().children('div.cont.cl > div:nth-child(1) > div > div > a:nth-child(1)');
-        //     var imdb = $(link).html();
-        //     // Our parsed meta data object
-        //     var metadata = {
-        //         title: title,
-        //         imdb: imdb
-        //     };
-        //     // Push meta-data into parsedResults array
-        //     parsedResults.push(metadata);
-        // });
 
         $('div.cont.cl > div:nth-child(1) > div > div > a:nth-child(1)').each(function(i, element) {
             var a = $(this).attr('href');
@@ -26,6 +13,7 @@ request('https://www.ddlvalley.me/category/movies/', function(error, response, h
             var c = $(this).parent().parent().parent().parent();
             var title = c.parent().prev().text();
             var meta = c.prev().children('span.fl').children('span.date').text();
+            var rating = 0;
 
             // Our parsed meta data object
             var metadata = {
@@ -33,17 +21,21 @@ request('https://www.ddlvalley.me/category/movies/', function(error, response, h
                 title: title,
                 meta: meta
             };
-            // Push meta-data into parsedResults array
-            parsedResults.push(metadata);
-        });
 
-        // Log our finished parse results in the terminal
-        console.log(parsedResults);
+            // request to IMDB
+            request(link, function(error, response, html) {
+                if (!error && response.statusCode == 200) {
+                    var $ = cheerio.load(html);
+                    $('div.ratingValue strong span').each(function(i, element) {
+                        rating = $(this).html();
+                        metadata.rating = rating;
+                    });
+                    // Push meta-data into parsedResults array
+                    parsedResults.push(metadata);
+                    // Log our finished parse results in the terminal
+                    console.log(parsedResults);
+                }
+            });
+        });
     }
 });
-
-//  #post-464080 > div.cont.cl > div:nth-child(1) > div > div > a:nth-child(1)
-//  #post-464080 > div.cont.cl > div:nth-child(1) > div > div > a:nth-child(2)
-//  #post-464080 > div.cont.cl > div:nth-child(1) > div > div > a:nth-child(1)
-//  #post-464080 > div.cont.cl > div:nth-child(1) > div > div > a:nth-child(2)
-//  #post-464080 > div.meta.br5 > span.fl > span.author > a
